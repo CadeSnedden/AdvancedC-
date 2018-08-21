@@ -1,0 +1,13 @@
+Clone: Download whole code of the Repository
+
+Commit: Records changes to Repository
+
+Fetch: updates remote-tracking branches under refs/remotes/<remote>/
+
+Pull: Sends requests to others working on project to accept changes
+
+Push: updates remote references along with associated objects
+
+Repository: location where all fiels for particular project are stored
+
+Visual Studio TFS: Team Foundation Server, allows mulitple people to work on the same program.
